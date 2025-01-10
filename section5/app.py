@@ -27,13 +27,33 @@ def create_store():
                 message=f"Store with name store_data['name'] already exist."
             )
     store_id = uuid.uuid4().hex
+    # Unpacks all key-value pairs from store_data and adds the id key-value pair
+    # Add a new key id wuth valye store_id
+    # Creates a new dictionary with all key-value pairs from store_data and adds the id key-value pair
     new_store = {**store_data, "id": store_id}
     stores[store_id] = new_store
     # Default status code is 200
     return new_store, 201
 
+@app.get('/store/<string:store_id>')
+def get_store(store_id):
+    try:
+        return stores[store_id]
+    except KeyError:
+        abort(404, message="Store not found")
+
+
+@app.delete('/store/<string:store_id>')
+def delete_store(store_id):
+    try:
+        del stores[store_id]
+        return {"message": "Store deleted"}
+    except KeyError:
+        abort(404, message="Store not found")
+        
+
 @app.post('/item')
-def create_item(name):
+def create_item():
     item_data = request.get_json()
     if(
         "price" not in item_data
@@ -51,8 +71,10 @@ def create_item(name):
         ):
             abort(400, message=f"Item {item_data["name"]} already exist for store {item_data["store_id"]}")
 
+    print(f"Checking stores before {item_data['store_id']}")
     if item_data["store_id"] not in stores:
         abort(404, message="Store not found")
+    print(f"Checking stores after {item_data['store_id']}")
     
     item_id = uuid.uuid4().hex
     new_item = {**item_data, "id": item_id}
@@ -64,17 +86,35 @@ def get_all_items():
     return {"items": list(items.values())}
 
 
-@app.get('/store/<string:store_id>')
-def get_store(store_id):
-    try:
-        return stores[store_id]
-    except KeyError:
-        abort(404, message="Store not found")
-
-
 @app.get('/item/<string:item_id>')
 def get_item(item_id):
     try:
         return items[item_id]
+    except:
+        abort(404, message="Item not found")
+
+
+@app.put('/item/<string:item_id>')
+def update_item(item_id):
+    item_data = request.get_json()
+    if "name" not in item_data and "price" not in item_data:
+        abort(
+            400,
+            message="Bad request. Ensure 'name' or 'price' is included in the JSON payload."
+        )
+    try:
+        item = items[item_id]
+        item |= item_data
+        # item.update(item_data)
+        return item
+    except:
+        abort(404, message="Item not found")
+
+
+@app.delete('/item/<string:item_id>')
+def delete_item(item_id):
+    try:
+        del items[item_id]
+        return {"message": "Item deleted"}
     except:
         abort(404, message="Item not found")
