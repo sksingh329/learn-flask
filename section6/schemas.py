@@ -1,13 +1,15 @@
 from marshmallow import Schema, fields
 
 
-class ItemSchema(Schema):
+class PlainItemSchema(Schema):
     # Only to retrun the id, not to accept it
     id = fields.Str(dump_only=True)
-    # Required fields
     name = fields.Str(required=True)
     price = fields.Float(required=True)
-    store_id = fields.Str(required=True)
+
+class PlainStoreSchema(Schema):
+    id = fields.Str(dump_only=True)
+    name = fields.Str(required=True)
 
 
 class ItemUpdateSchema(Schema):
@@ -15,6 +17,10 @@ class ItemUpdateSchema(Schema):
     price = fields.Float()
 
 
-class StoreSchema(Schema):
-    id = fields.Str(dump_only=True)
-    name = fields.Str(required=True)
+class StoreSchema(PlainStoreSchema):
+    items = fields.Nested(PlainItemSchema, many=True, dump_only=True)
+
+
+class ItemSchema(PlainItemSchema):
+    store_id = fields.Str(required=True, load_only=True)
+    store = fields.Nested(PlainStoreSchema, dump_only=True)
